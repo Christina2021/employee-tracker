@@ -52,6 +52,7 @@ function mainPrompts() {
                 viewEmployeesByDepartment();
                 break;
             case 'View All Employees By Manager':
+                viewEmployeesByManager()
                 break;
             case 'Add Employee':
                 break;
@@ -97,12 +98,11 @@ function viewAllEmployees() {
 function viewEmployeesByDepartment() {
     let departments = [];
 
+    //Takes all departments from table to be displayed as choices
     db.query('SELECT * FROM department', function(err,res){
         res.forEach((item) => {
             departments.push(item.name);
         })
-
-        console.log(departments);
 
         inquirer
         .prompt(
@@ -123,3 +123,42 @@ function viewEmployeesByDepartment() {
         })    
     });
 }
+
+function viewEmployeesByManager() {
+    let managers = [];
+    let managersId = [];
+
+    //Takes all managers (based on those who do not report to a manager) from table to be displayed as choices
+    db.query('SELECT * FROM employee', function(err,res){
+
+        res.forEach((item) => {
+            if(!item.manager_id) {
+                managers.push(item.first_name + " " + item.last_name);
+                managersId.push(item.id);
+            }
+        })
+
+        console.log(managers);
+        console.log(managersId);
+
+        inquirer
+        .prompt(
+            {
+                type: 'list',
+                message: 'Which manager would you like to see the employees that work under them?',
+                choices: managers,
+                name: 'action'
+            }
+        )
+        .then((response) => {
+            console.log("==================================================================================================");
+            let index = managers.indexOf(response.action)
+
+            db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id WHERE employee.manager_id = ? ORDER BY employee.id', managersId[index], function(err, res){
+                console.table(res);
+                mainPrompts();
+            })
+        })    
+    });
+}
+
