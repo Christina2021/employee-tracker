@@ -49,6 +49,7 @@ function mainPrompts() {
                 viewAllEmployees();
                 break;
             case 'View All Employees By Department':
+                viewEmployeesByDepartment();
                 break;
             case 'View All Employees By Manager':
                 break;
@@ -84,11 +85,41 @@ function mainPrompts() {
                 return;
         }
     })
-};
+}
 
 function viewAllEmployees() {
     db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title, department.name AS department, role.salary, CONCAT(m.first_name, " ", m.last_name) AS manager FROM employee LEFT JOIN employee m ON employee.manager_id = m.id INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id ORDER BY employee.id', function(err, res) {
         console.table(res);
         mainPrompts();
     });
-};
+}
+
+function viewEmployeesByDepartment() {
+    let departments = [];
+
+    db.query('SELECT * FROM department', function(err,res){
+        res.forEach((item) => {
+            departments.push(item.name);
+        })
+
+        console.log(departments);
+
+        inquirer
+        .prompt(
+            {
+                type: 'list',
+                message: 'Which department would you like to see the employees for?',
+                choices: departments,
+                name: 'action'
+            }
+        )
+        .then((response) => {
+            console.log("==================================================================================================");
+
+            db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id WHERE department.name = ? ORDER BY employee.id', response.action, function(err, res){
+                console.table(res);
+                mainPrompts();
+            })
+        })    
+    });
+}
