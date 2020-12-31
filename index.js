@@ -75,6 +75,7 @@ function mainPrompts() {
                 addRole();
                 break;
             case 'Remove Role':
+                removeRole();
                 break;
             case 'View All Departments':
                 viewDepartments();
@@ -468,7 +469,7 @@ function addRole() {
             {
                 title: response.title,
                 salary: response.salary,
-                department_id: departmentsId
+                department_id: departmentId
             }, 
             function(err,res) {
                 if (err) throw err;
@@ -478,6 +479,40 @@ function addRole() {
             
             mainPrompts();
         })   
+    });
+}
+
+function removeRole() {
+    let roles = [];
+    let rolesId = [];
+
+
+    //Adds roles to arrays
+    db.query('SELECT * FROM role', function(err, res){
+        res.forEach((item) => {
+            roles.push(item.title);
+            rolesId.push(item.id);
+        })
+
+        inquirer
+        .prompt(
+            {
+                type: 'list',
+                message: 'Which role would you like to have removed?',
+                choices: roles,
+                name: 'action'
+            }
+        )
+        .then((response) => {
+            console.log("==================================================================================================");
+            let roleIndex = roles.indexOf(response.action);
+            let roleId = rolesId[roleIndex];
+
+            db.query('DELETE FROM role WHERE role.id = ?', roleId, function(err, res){
+                console.log(`${response.action} was successfully removed from the database`)
+                mainPrompts();
+            })
+        })    
     });
 }
 
