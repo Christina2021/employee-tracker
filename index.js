@@ -72,7 +72,7 @@ function mainPrompts() {
                 viewRoles();
                 break;
             case 'Add Role':
-                
+                addRole();
                 break;
             case 'Remove Role':
                 break;
@@ -248,8 +248,6 @@ function addEmployee() {
             })
 
             console.log(`Successfully added ${response.first} ${response.last} to the database!`)
-
-            console.log("==================================================================================================");
             
             mainPrompts();
         })   
@@ -429,6 +427,57 @@ function viewRoles() {
     db.query('SELECT role.id, role.title, role.salary, department.name FROM role INNER JOIN department ON role.department_id = department.id ORDER BY role.id', function(err, res) {
         console.table(res);
         mainPrompts();
+    });
+}
+
+function addRole() {
+    let departments = [];
+    let departmentsId = [];
+
+
+    db.query('SELECT * FROM department ORDER BY department.id', function(err,res){
+        res.forEach((item) => {
+            departments.push(item.name);
+            departmentsId.push(item.id)
+        })
+        
+        inquirer
+        .prompt([
+            {
+                type: 'input',
+                message: `What is the title for the new role?`,
+                name: 'title'
+            },
+            {
+                type: 'input',
+                message: `What is the salary for the new role?`,
+                name: 'salary'
+            },
+            {
+                type: 'list',
+                message: `Which department does the new role fall under?`,
+                choices: departments,
+                name: 'department'
+            }
+        ])
+        .then((response) => {
+            let departmentIndex = departments.indexOf(response.department);
+            let departmentId = departmentsId[departmentIndex];
+
+            db.query('INSERT INTO role SET ?',
+            {
+                title: response.title,
+                salary: response.salary,
+                department_id: departmentsId
+            }, 
+            function(err,res) {
+                if (err) throw err;
+            })
+
+            console.log(`Successfully added the new role ${response.title} to the database!`)
+            
+            mainPrompts();
+        })   
     });
 }
 
