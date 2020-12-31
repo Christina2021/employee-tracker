@@ -138,7 +138,7 @@ function mainPrompts() {
                 viewDepartments();
                 break;
             case 'View the Total Utilized Budget of a Department':
-                viewTotalUtilizedBudget(departments, departmentsId);
+                viewTotalUtilizedBudget(rolesId, departments, departmentsId);
                 break;
             case 'Add Department':
                 addDepartment();
@@ -453,7 +453,7 @@ function viewDepartments() {
     });
 }
 
-function viewTotalUtilizedBudget(departments, departmentsId) {
+function viewTotalUtilizedBudget(rolesId, departments, departmentsId) {
     inquirer
     .prompt([
         {
@@ -467,7 +467,7 @@ function viewTotalUtilizedBudget(departments, departmentsId) {
         let departmentIndex = departments.indexOf(response.department);
         let departmentId = departmentsId[departmentIndex];
 
-        db.query('SELECT * from role where department_id = ?', departmentId, function(err,res) {
+        db.query('SELECT * FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id WHERE department_id = ?', departmentId, function(err, res) {
             let total = 0;
             res.forEach((item) => total += item.salary)
             console.log(`The total utilized budget for ${response.department} is $${total}.`);
