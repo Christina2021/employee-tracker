@@ -17,7 +17,7 @@ title();
 
 function mainPrompts() {
     console.log("==================================================================================================");
-    
+
     inquirer
     .prompt(
         {
@@ -60,6 +60,7 @@ function mainPrompts() {
                 addEmployee();
                 break;
             case 'Remove Employee':
+                removeEmployee();
                 break;
             case 'Update Employee Role':
                 break;
@@ -142,9 +143,6 @@ function viewEmployeesByManager() {
                 managersId.push(item.id);
             }
         })
-
-        console.log(managers);
-        console.log(managersId);
 
         inquirer
         .prompt(
@@ -252,6 +250,42 @@ function addEmployee() {
             
             mainPrompts();
         })   
+    });
+}
+
+function removeEmployee() {
+    let employees = [];
+    let employeesId = [];
+
+    //Takes all managers (based on those who do not report to a manager) from table to be displayed as choices
+    db.query('SELECT * FROM employee ORDER BY employee.id', function(err,res){
+
+        res.forEach((item) => {
+            employees.push(`${item.first_name} ${item.last_name}`)
+            employeesId.push(item.id)
+        })
+
+        console.log(employees);
+
+        inquirer
+        .prompt(
+            {
+                type: 'list',
+                message: 'Which employee would you like to have removed?',
+                choices: employees,
+                name: 'action'
+            }
+        )
+        .then((response) => {
+            console.log("==================================================================================================");
+            let employeeIndex = employees.indexOf(response.action);
+            let employeeId = employeesId[employeeIndex];
+
+            db.query('DELETE FROM employee WHERE employee.id = ?', employeeId, function(err, res){
+                console.log(`${response.action} was successfully removed from the database`)
+                mainPrompts();
+            })
+        })    
     });
 }
 
