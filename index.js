@@ -84,6 +84,7 @@ function mainPrompts() {
                 viewTotalUtilizedBudget();
                 break;
             case 'Add Department':
+                addDepartment();
                 break;
             case 'Remove Department':
                 break;
@@ -559,3 +560,31 @@ function viewTotalUtilizedBudget() {
         })   
     });
 }
+
+function addDepartment() {
+        
+    inquirer
+    .prompt([
+        {
+            type: 'input',
+            message: `What is the name of the new department?`,
+            name: 'name'
+        }
+    ])
+    .then((response) => {
+
+        db.query('INSERT INTO department SET ?',
+        {
+            name: response.name,
+        }, 
+        function(err,res) {
+            if (err) throw err;
+        })
+
+        console.log(`Successfully added the new department ${response.name} to the database!`)
+        
+        mainPrompts();
+    })   
+
+}
+
