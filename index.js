@@ -66,11 +66,13 @@ function mainPrompts() {
                 updateEmployeeRole();
                 break;
             case 'Update Employee Manager':
+                updateEmployeeManager();
                 break;
             case 'View All Roles':
                 viewRoles();
                 break;
             case 'Add Role':
+                
                 break;
             case 'Remove Role':
                 break;
@@ -336,6 +338,79 @@ function updateEmployeeRole() {
             [
                 {
                     role_id: roleId
+                },
+                {
+                    id: employeeId   
+                }
+            ],
+             function(err, res){
+                if (err) throw err;
+                console.log(`${response.employee} was successfully updated`)
+                mainPrompts();
+            })
+        })    
+    });
+}
+
+function updateEmployeeManager() {
+    let managers = [];
+    let managersId = [];
+    let employees = [];
+    let employeesId = [];
+
+    db.query('SELECT * FROM employee', function(err,res){
+        //Adds managers to arrays
+        res.forEach((item) => {
+            if(!item.manager_id) {
+                managers.push(item.first_name + " " + item.last_name);
+                managersId.push(item.id);
+            }
+        })
+        managers.push("None")
+    });
+
+    //List of employees
+    db.query('SELECT * FROM employee ORDER BY employee.id', function(err,res){
+
+        res.forEach((item) => {
+            employees.push(`${item.first_name} ${item.last_name}`)
+            employeesId.push(item.id)
+        })
+
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                message: 'Which employee would you like to update?',
+                choices: employees,
+                name: 'employee'
+            },
+            {
+                type: 'list',
+                message: 'Which manager would you like for the employee to work under?',
+                choices: managers,
+                name: 'manager'
+            },            
+        ])
+        .then((response) => {
+            console.log("==================================================================================================");
+            let employeeIndex = employees.indexOf(response.employee);
+            let employeeId = employeesId[employeeIndex];
+            let managerIndex;
+            let managerId;
+
+            if (response.manager != "None"){
+                managerIndex = managers.indexOf(response.manager);
+                managerId = managersId[managerIndex];
+            } else {
+                managerId = null;
+            }
+
+
+            db.query('UPDATE employee SET ? WHERE ?', 
+            [
+                {
+                    manager_id: managerId
                 },
                 {
                     id: employeeId   
