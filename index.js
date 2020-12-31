@@ -16,6 +16,8 @@ function title() {
 title();
 
 function mainPrompts() {
+    console.log("==================================================================================================");
+    
     inquirer
     .prompt(
         {
@@ -55,6 +57,7 @@ function mainPrompts() {
                 viewEmployeesByManager()
                 break;
             case 'Add Employee':
+                addEmployee();
                 break;
             case 'Remove Employee':
                 break;
@@ -63,12 +66,14 @@ function mainPrompts() {
             case 'Update Employee Manager':
                 break;
             case 'View All Roles':
+                viewRoles();
                 break;
             case 'Add Role':
                 break;
             case 'Remove Role':
                 break;
             case 'View All Departments':
+                viewDepartments();
                 break;
             case 'View the Total Utilized Budget of a Department':
                 break;
@@ -155,10 +160,111 @@ function viewEmployeesByManager() {
             let index = managers.indexOf(response.action)
 
             db.query('SELECT employee.id, employee.first_name, employee.last_name, role.title FROM employee INNER JOIN role ON employee.role_id = role.id INNER JOIN department ON role.department_id = department.id WHERE employee.manager_id = ? ORDER BY employee.id', managersId[index], function(err, res){
-                console.table(res);
+                if(!res[0]){
+                    console.log("There are no employees currently working under this manager.")
+                } else {
+                    console.table(res);
+                }
                 mainPrompts();
             })
         })    
     });
 }
 
+function addEmployee() {
+    let roles = [];
+    let rolesId = [];
+    let managers = [];
+    let managersId = [];
+
+    //Adds roles to arrays
+    db.query('SELECT * FROM role', function(err, res){
+        res.forEach((item) => {
+            roles.push(item.title);
+            rolesId.push(item.id)
+        })
+    })
+
+    //Adds managers to arrays
+    db.query('SELECT * FROM employee', function(err,res){
+
+        res.forEach((item) => {
+            if(!item.manager_id) {
+                managers.push(item.first_name + " " + item.last_name);
+                managersId.push(item.id);
+            }
+        })
+        managers.push("None")
+
+        inquirer
+        .prompt([
+            {
+                type: 'input',
+                message: `What is the new employee's first name?`,
+                name: 'first'
+            },
+            {
+                type: 'input',
+                message: `What is the new employee's last name?`,
+                name: 'last'
+            },
+            {
+                type: 'list',
+                message: `What is the employee's role?`,
+                choices: roles,
+                name: 'role'
+            },
+            {
+                type: 'list',
+                message: `Who is the employee's manager?`,
+                choices: managers,
+                name: 'manager'
+            },
+
+        ])
+        .then((response) => {
+            let roleIndex = roles.indexOf(response.role);
+            let roleId = rolesId[roleIndex];
+            let managerIndex;
+            let managerId;
+
+            if (response.manager != "None"){
+                managerIndex = managers.indexOf(response.manager);
+                managerId = managersId[managerIndex];
+            } else {
+                managerId = null;
+            }
+
+            db.query('INSERT INTO employee SET ?',
+            {
+                first_name: response.first,
+                last_name: response.last,
+                role_id: roleId,
+                manager_id: managerId
+            }, 
+            function(err,res) {
+                if (err) throw err;
+            })
+
+            console.log(`Successfully added ${response.first} ${response.last} to the database!`)
+
+            console.log("==================================================================================================");
+            
+            mainPrompts();
+        })   
+    });
+}
+
+function viewRoles() {
+    db.query('SELECT role.id, role.title, role.salary, department.name FROM role INNER JOIN department ON role.department_id = department.id ORDER BY role.id', function(err, res) {
+        console.table(res);
+        mainPrompts();
+    });
+}
+
+function viewDepartments() {
+    db.query('SELECT * FROM department ORDER BY department.id', function(err, res) {
+        console.table(res);
+        mainPrompts();
+    });
+}
