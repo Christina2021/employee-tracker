@@ -87,6 +87,7 @@ function mainPrompts() {
                 addDepartment();
                 break;
             case 'Remove Department':
+                removeDepartment()
                 break;
             case 'Quit':
                 console.log("Goodbye");
@@ -584,7 +585,38 @@ function addDepartment() {
         console.log(`Successfully added the new department ${response.name} to the database!`)
         
         mainPrompts();
-    })   
-
+    });
 }
 
+function removeDepartment() {
+    let departments = [];
+    let departmentsId = [];
+
+
+    db.query('SELECT * FROM department ORDER BY department.id', function(err,res){
+        res.forEach((item) => {
+            departments.push(item.name);
+            departmentsId.push(item.id)
+        })
+
+        inquirer
+        .prompt(
+            {
+                type: 'list',
+                message: 'Which department would you like to have removed?',
+                choices: departments,
+                name: 'action'
+            }
+        )
+        .then((response) => {
+            console.log("==================================================================================================");
+            let departmentIndex = departments.indexOf(response.action);
+            let departmentId = departmentsId[departmentIndex];
+
+            db.query('DELETE FROM department WHERE department.id = ?', departmentId, function(err, res){
+                console.log(`${response.action} was successfully removed from the database`)
+                mainPrompts();
+            })
+        })    
+    });
+}
