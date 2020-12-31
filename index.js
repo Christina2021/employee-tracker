@@ -81,6 +81,7 @@ function mainPrompts() {
                 viewDepartments();
                 break;
             case 'View the Total Utilized Budget of a Department':
+                viewTotalUtilizedBudget();
                 break;
             case 'Add Department':
                 break;
@@ -520,5 +521,41 @@ function viewDepartments() {
     db.query('SELECT * FROM department ORDER BY department.id', function(err, res) {
         console.table(res);
         mainPrompts();
+    });
+}
+
+function viewTotalUtilizedBudget() {
+    let departments = [];
+    let departmentsId = [];
+
+
+    db.query('SELECT * FROM department ORDER BY department.id', function(err,res){
+        res.forEach((item) => {
+            departments.push(item.name);
+            departmentsId.push(item.id)
+        })
+        
+        inquirer
+        .prompt([
+            {
+                type: 'list',
+                message: `Which department would you like to see the total utilized budget for?`,
+                choices: departments,
+                name: 'department'
+            }
+        ])
+        .then((response) => {
+            let departmentIndex = departments.indexOf(response.department);
+            let departmentId = departmentsId[departmentIndex];
+
+            db.query('SELECT * from role where department_id = ?', departmentId, function(err,res) {
+                let total = 0;
+                res.forEach((item) => total += item.salary)
+                console.log(`The total utilized budget for ${response.department} is $${total}.`);
+
+                mainPrompts();
+            })
+
+        })   
     });
 }
